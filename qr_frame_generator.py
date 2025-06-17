@@ -8,13 +8,14 @@ st.set_page_config(page_title="RestoSuite 桌台码生成器", layout="centered"
 st.title("📦 RestoSuite QR 桌台码生成器")
 st.markdown(
     """
-    <div style="display: flex; align-items: center; justify-content: space-between;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
         <span style="font-size: 0.9rem; color: gray;">
             📷 上传 QR 图像，系统生成标准标签样式并导出 PDF
         </span>
-        <a href="https://www.linkedin.com/in/lingyu-maxwell-lai" target="_blank" style="text-decoration: none;">
-            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg"
-                 width="20" height="20" style="margin-left: 10px;" />
+        <a href="https://www.linkedin.com/in/lingyu-maxwell-lai" target="_blank"
+           style="background-color: white; border: 1px solid #ddd; border-radius: 6px; padding: 2px 6px; display: flex; align-items: center; text-decoration: none;">
+            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png"
+                 width="16" height="16" style="margin-right: 4px;" />
         </a>
     </div>
     """,
