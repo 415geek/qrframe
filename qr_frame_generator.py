@@ -6,7 +6,20 @@ import os
 # 页面设置
 st.set_page_config(page_title="RestoSuite 桌台码生成器", layout="centered")
 st.title("📦 RestoSuite QR 桌台码生成器")
-st.caption("上传 QR 图像，系统生成标准标签样式并导出 PDF")
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; justify-content: space-between;">
+        <span style="font-size: 0.9rem; color: gray;">
+            📷 上传 QR 图像，系统生成标准标签样式并导出 PDF
+        </span>
+        <a href="https://www.linkedin.com/in/lingyu-maxwell-lai" target="_blank" style="text-decoration: none;">
+            <img src="https://cdn.jsdelivr.net/gh/simple-icons/simple-icons/icons/linkedin.svg"
+                 width="20" height="20" style="margin-left: 10px;" />
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
 # 加载字体
 @st.cache_data
