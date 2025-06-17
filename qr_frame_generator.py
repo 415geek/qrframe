@@ -3,9 +3,22 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import os
 
+st.markdown(
+    """
+    <div style='text-align: center; margin-top: 30px;'>
+        <a href='https://www.linkedin.com/in/lingyu-maxwell-lai' target='_blank' style='text-decoration: none;'>
+            <button style='background-color: #0077B5; color: white; border: none; border-radius: 5px; padding: 10px 20px; font-size: 16px; cursor: pointer;'>
+                🔗 LinkedIn: Lingyu Maxwell Lai
+            </button>
+        </a>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 # 页面设置
-st.set_page_config(page_title="RestoSuite 标签生成器", layout="centered")
-st.title("📦 RestoSuite QR 标签生成器")
+st.set_page_config(page_title="RestoSuite 桌台二维码生成器", layout="centered")
+st.title("📦 RestoSuite QR 桌台码生成器")
 st.caption("上传 QR 图像，系统生成标准标签样式并导出 PDF")
 
 # 加载字体
