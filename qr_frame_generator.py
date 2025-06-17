@@ -3,6 +3,11 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import os
 
+# 页面设置
+st.set_page_config(page_title="RestoSuite 桌台码生成器", layout="centered")
+st.title("📦 RestoSuite QR 桌台码生成器")
+st.caption("上传 QR 图像，系统生成标准标签样式并导出 PDF")
+
 st.markdown(
     """
     <div style='text-align: center; margin-top: 30px;'>
@@ -15,12 +20,6 @@ st.markdown(
     """,
     unsafe_allow_html=True
 )
-
-# 页面设置
-st.set_page_config(page_title="RestoSuite 桌台码生成器", layout="centered")
-st.title("📦 RestoSuite QR 桌台码生成器")
-st.caption("上传 QR 图像，系统生成标准标签样式并导出 PDF")
-
 # 加载字体
 @st.cache_data
 def load_font(size=48):
