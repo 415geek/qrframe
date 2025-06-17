@@ -11,11 +11,19 @@ st.caption("上传 QR 图像，系统生成标准标签样式并导出 PDF")
 # 加载字体
 @st.cache_data
 def load_font(size=48):
-    try:
-        return ImageFont.truetype("/System/Library/Fonts/Supplemental/Arial Bold.ttf", size)
-    except:
-        return ImageFont.load_default()
-
+    # 尝试加载常见字体路径（Windows, Linux, macOS）
+    font_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",     # macOS
+        "C:\\Windows\\Fonts\\arialbd.ttf"                        # Windows
+    ]
+    for path in font_paths:
+        try:
+            return ImageFont.truetype(path, size)
+        except:
+            continue
+    # 退回默认字体
+    return ImageFont.load_default()
 font_large = load_font(72)
 
 # 自动裁剪透明留白的 logo
