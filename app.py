@@ -3,118 +3,98 @@ from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 import os
 
-# 页面设置
-st.set_page_config(page_title="RestoSuite 桌台码生成器", layout="centered")
-st.title("📦 RestoSuite QR 桌台码生成器")
-st.markdown(
-    """
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-        <span style="font-size: 0.9rem; color: gray;">
-            📷 上传 QR 图像，系统生成标准标签样式并导出 PDF
-        </span>
-        <a href="https://www.linkedin.com/in/lingyu-maxwell-lai" target="_blank"
-           style="background-color: white; border: 1px solid #ddd; border-radius: 6px; padding: 2px 6px; display: flex; align-items: center; text-decoration: none;">
-            <img src="https://cdn-icons-png.flaticon.com/512/174/174857.png"
-                 width="16" height="16" style="margin-right: 4px;" />
-        </a>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# 🪄 可选：尝试导入高级拖拽库
+try:
+    from streamlit_drawable_canvas import st_canvas
+    HAS_CANVAS = True
+except ImportError:
+    HAS_CANVAS = False
 
-# 加载字体
+st.set_page_config(page_title="RestoSuite QR 桌台码生成器", layout="wide")
+st.title("📦 RestoSuite QR 桌台码生成器（滑块版 + 鼠标拖拽版）")
+
+LETTER_SIZE = (612, 792)
+LABEL_SIZE = (200, 250)
+LABELS_PER_PAGE = 9
+COLUMNS, ROWS = 3, 3
+
 @st.cache_data
-def load_font(size=48):
-    # 尝试加载常见字体路径（Windows, Linux, macOS）
+def load_font(size=20):
     font_paths = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",  # Linux
-        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",     # macOS
-        "C:\\Windows\\Fonts\\arialbd.ttf"                        # Windows
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+        "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+        "C:\\Windows\\Fonts\\arialbd.ttf"
     ]
     for path in font_paths:
         try:
             return ImageFont.truetype(path, size)
         except:
             continue
-    # 退回默认字体
     return ImageFont.load_default()
-font_large = load_font(72)
+font = load_font(20)
 
-# 自动裁剪透明留白的 logo
-def trim_logo(img):
-    bbox = img.getbbox()
-    return img.crop(bbox)
-
-# 尝试加载 logo
-try:
-    logo_raw = Image.open("logo.png").convert("RGBA")
-    logo_img = trim_logo(logo_raw).resize((480, 120))
-except:
-    logo_img = None
-    st.warning("⚠️ 未找到 logo.png，标签中将省略 Logo。")
-
-# 上传 QR 图像
-qr_files = st.file_uploader("📷 上传 QR 图像（如 A1.png、B2.jpg）", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
-
-# 样式定义
-label_w, label_h = 800, 1000
-qr_size = (460, 460)
-qr_offset = (170, 140)
-text_pos_y = 650
-logo_pos_y = 740
-labels_per_page = 9
-cols, rows = 3, 3
-
-# 生成单个标签
-def create_label(qr_img, desk_name):
-    canvas = Image.new("RGB", (label_w, label_h), "white")
-    draw = ImageDraw.Draw(canvas)
-
-    # 蓝色圆角边框
-    draw.rounded_rectangle((10, 10, label_w - 10, label_h - 10), radius=40, outline="#237EFB", width=13)
-
-    # QR
-    qr_resized = qr_img.resize(qr_size)
-    canvas.paste(qr_resized, qr_offset, qr_resized)
-
-    # 桌号文字（加粗）
-    bbox = draw.textbbox((0, 0), desk_name, font=font_large)
-    w = bbox[2] - bbox[0]
-    draw.text(((label_w - w) // 2, text_pos_y), desk_name, font=font_large, fill="black")
-
-    # Logo
-    if logo_img:
-        canvas.paste(logo_img, ((label_w - logo_img.width) // 2, logo_pos_y), logo_img)
-
-    return canvas
+qr_files = st.file_uploader("📷 上传 QR 图像", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 
 if qr_files:
-    st.success(f"✅ 已上传 {len(qr_files)} 张二维码，将生成标签并分页导出")
+    st.success(f"✅ 成功上传 {len(qr_files)} 张二维码")
 
-    page_w = label_w * cols
-    page_h = label_h * rows
+    mode = st.radio("请选择模式：", ["简单模式（滑块调节）", "高级模式（鼠标拖拽）"])
+
+    custom_text = st.text_input("✏️ 输入自定义文字（如店名）", value="欢迎光临")
+
+    if mode == "简单模式（滑块调节）":
+        st.info("使用滑块调节文字位置（推荐：快速简便）")
+        desk_x = st.slider("桌号 X 坐标", 0, LABEL_SIZE[0], 40)
+        desk_y = st.slider("桌号 Y 坐标", 0, LABEL_SIZE[1], 180)
+        custom_x = st.slider("自定义文字 X 坐标", 0, LABEL_SIZE[0], 20)
+        custom_y = st.slider("自定义文字 Y 坐标", 0, LABEL_SIZE[1], 210)
+
+    elif mode == "高级模式（鼠标拖拽）":
+        if not HAS_CANVAS:
+            st.error("当前环境缺少 streamlit-drawable-canvas，请运行：pip install streamlit-drawable-canvas")
+            st.stop()
+
+        qr_img = Image.open(qr_files[0]).convert("RGBA").resize((180, 180))
+        st.markdown("🖱️ 在下方画布中拖拽文字位置：")
+        canvas_result = st_canvas(
+            fill_color="rgba(255, 255, 255, 0)",
+            background_image=qr_img,
+            update_streamlit=True,
+            height=LABEL_SIZE[1],
+            width=LABEL_SIZE[0],
+            drawing_mode="transform",
+            initial_drawing=[
+                {"type": "text", "text": os.path.splitext(qr_files[0].name)[0], "left": 40, "top": 180, "font": "20px Arial"},
+                {"type": "text", "text": custom_text, "left": 20, "top": 210, "font": "20px Arial"},
+            ],
+            key="canvas",
+        )
+        objs = canvas_result.json_data["objects"]
+        desk_x, desk_y = int(objs[0]["left"]), int(objs[0]["top"])
+        custom_x, custom_y = int(objs[1]["left"]), int(objs[1]["top"])
+        st.success(f"✔️ 已锁定坐标：桌号 ({desk_x},{desk_y}), 店名 ({custom_x},{custom_y})")
+
+    # PDF 生成
     pages = []
-
-    for i in range(0, len(qr_files), labels_per_page):
-        canvas = Image.new("RGB", (page_w, page_h), "white")
-
-        for idx, file in enumerate(qr_files[i:i + labels_per_page]):
-            qr = Image.open(file).convert("RGBA")
+    for i in range(0, len(qr_files), LABELS_PER_PAGE):
+        page = Image.new("RGB", LETTER_SIZE, "white")
+        for idx, file in enumerate(qr_files[i:i + LABELS_PER_PAGE]):
+            qr = Image.open(file).convert("RGBA").resize((180, 180))
             desk_name = os.path.splitext(file.name)[0]
-            label = create_label(qr, desk_name)
+            label = Image.new("RGB", LABEL_SIZE, "white")
+            draw = ImageDraw.Draw(label)
+            label.paste(qr, (10, 0))
+            draw.text((desk_x, desk_y), desk_name, font=font, fill="black")
+            draw.text((custom_x, custom_y), custom_text, font=font, fill="gray")
+            row, col = divmod(idx, COLUMNS)
+            x = col * LABEL_SIZE[0]
+            y = row * LABEL_SIZE[1]
+            page.paste(label, (x, y))
+        pages.append(page)
 
-            row, col = divmod(idx, cols)
-            x = col * label_w
-            y = row * label_h
-            canvas.paste(label, (x, y))
-
-        pages.append(canvas)
-
-    # 预览
-    st.subheader("🖼️ 标签预览（第1页）：")
+    st.subheader("🖼️ 标签 PDF 预览 (第1页)")
     st.image(pages[0])
 
-    # 导出 PDF
     pdf_bytes = BytesIO()
     pages[0].save(pdf_bytes, format="PDF", save_all=True, append_images=pages[1:])
-    st.download_button("📥 下载标签 PDF", data=pdf_bytes.getvalue(), file_name="RestoSuite_Tags.pdf", mime="application/pdf")
+    st.download_button("📥 下载标签 PDF（Letter 尺寸）", data=pdf_bytes.getvalue(), file_name="桌台二维码标签.pdf", mime="application/pdf")
